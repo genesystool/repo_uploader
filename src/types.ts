@@ -109,4 +109,4 @@ export interface AppSettings {
   defaultCommitMessage: string;
 }
 
-export type ViewTab = 'explorer' | 'upload' | 'editor' | 'python' | 'history';
+export type ViewTab = 'explorer' | 'upload' | 'editor' | 'python' | 'history' | 'tutorial';

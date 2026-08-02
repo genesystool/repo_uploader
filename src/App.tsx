@@ -7,6 +7,7 @@ import { FileEditor } from './components/FileEditor';
 import { FileUpload } from './components/FileUpload';
 import { PythonWorkbench } from './components/PythonWorkbench';
 import { CommitHistory } from './components/CommitHistory';
+import { TutorialGuide } from './components/TutorialGuide';
 import { NotificationToast, ToastMessage } from './components/NotificationToast';
 
 import { GitHubUser, ViewTab } from './types';
@@ -235,6 +236,13 @@ export default function App() {
                 owner={selectedOwner}
                 repo={selectedRepo}
                 branch={selectedBranch}
+              />
+            )}
+
+            {activeTab === 'tutorial' && (
+              <TutorialGuide
+                setActiveTab={setActiveTab}
+                openTokenModal={() => setIsTokenModalOpen(true)}
               />
             )}
           </div>

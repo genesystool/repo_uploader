@@ -10,6 +10,7 @@ import {
   XCircle,
   Sparkles,
   ExternalLink,
+  BookOpen,
 } from 'lucide-react';
 import { GitHubUser, ViewTab } from '../types';
 
@@ -116,6 +117,18 @@ export const Header: React.FC<HeaderProps> = ({
               <History className="w-4 h-4" />
               <span>Riwayat Commit</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('tutorial')}
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                activeTab === 'tutorial'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-amber-400/90 hover:text-amber-300 hover:bg-slate-800/50'
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              <span>Tutorial</span>
+            </button>
           </nav>
 
           {/* User Status / Token Config */}
@@ -208,6 +221,16 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             History
+          </button>
+          <button
+            onClick={() => setActiveTab('tutorial')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap ${
+              activeTab === 'tutorial'
+                ? 'bg-indigo-600 text-white'
+                : 'text-amber-400 hover:bg-slate-800'
+            }`}
+          >
+            Tutorial
           </button>
         </div>
       </div>
