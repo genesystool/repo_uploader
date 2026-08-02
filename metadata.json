@@ -1,0 +1,6 @@
+{
+  "name": "GitHub File Manager & Python Studio",
+  "description": "Aplikasi web untuk upload, update, dan kelola file repository GitHub serta generator skrip Python otomatis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
