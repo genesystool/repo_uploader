@@ -50,6 +50,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<GitHubContent | null>(null);
+  const [deleteCommitMsg, setDeleteCommitMsg] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -100,21 +101,28 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     setCurrentPath(parts.join('/'));
   };
 
+  const handleOpenDeleteModal = (item: GitHubContent) => {
+    setDeleteTarget(item);
+    setDeleteCommitMsg(`Delete ${item.name}`);
+  };
+
   const handleDeleteConfirm = async () => {
     if (!deleteTarget || !token) return;
     setIsDeleting(true);
     try {
+      const commitMsg = deleteCommitMsg.trim() || `Delete ${deleteTarget.name} via GitHub Studio`;
       await deleteFile(
         token,
         owner,
         repo,
         deleteTarget.path,
         deleteTarget.sha,
-        `Delete ${deleteTarget.name} via GitHub Studio App`,
+        commitMsg,
         branch
       );
-      showToast(`File ${deleteTarget.name} berhasil dihapus.`, 'success');
+      showToast(`File '${deleteTarget.name}' berhasil dihapus dari branch '${branch}'.`, 'success');
       setDeleteTarget(null);
+      setDeleteCommitMsg('');
       loadContents(currentPath);
     } catch (err: any) {
       showToast(`Gagal menghapus file: ${err.message}`, 'error');
@@ -328,13 +336,14 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end space-x-1.5">
                         {item.type === 'file' && (
-                          <>
+                          <div className="flex items-center space-x-1">
                             <button
                               onClick={() => onOpenFile(item.path, item.sha)}
                               title="Buka / Edit File"
-                              className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-slate-800 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
                             >
                               <Eye className="w-4 h-4" />
+                              <span className="hidden lg:inline">Edit</span>
                             </button>
 
                             {item.download_url && (
@@ -350,13 +359,14 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                             )}
 
                             <button
-                              onClick={() => setDeleteTarget(item)}
-                              title="Hapus File"
-                              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+                              onClick={() => handleOpenDeleteModal(item)}
+                              title="Hapus File Permanen"
+                              className="px-2 py-1 text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg flex items-center space-x-1 transition-all"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Hapus</span>
                             </button>
-                          </>
+                          </div>
                         )}
 
                         {item.type === 'dir' && (
@@ -380,37 +390,95 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-100 shadow-2xl">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 text-slate-100 shadow-2xl relative overflow-hidden">
             <div className="flex items-center space-x-3 text-rose-400">
-              <div className="p-2 bg-rose-500/20 rounded-xl">
+              <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="font-semibold text-base text-slate-100">
-                Konfirmasi Hapus File
-              </h3>
+              <div>
+                <h3 className="font-bold text-base text-slate-100">
+                  Konfirmasi Hapus File Permanen
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Aksi ini akan menghapus file dari repository GitHub.
+                </p>
+              </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Apakah Anda yakin ingin menghapus file{' '}
-              <strong className="text-rose-300 font-mono">{deleteTarget.path}</strong> dari
-              branch <strong className="text-slate-200">{branch}</strong>? Tindakan ini akan membuat commit hapus baru di GitHub.
-            </p>
+            {/* Target File Info Box */}
+            <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-medium">Nama File:</span>
+                <span className="font-mono text-rose-300 font-semibold truncate max-w-[220px]" title={deleteTarget.path}>
+                  {deleteTarget.name}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-medium">Jalur (Path):</span>
+                <span className="font-mono text-slate-300 truncate max-w-[220px]" title={deleteTarget.path}>
+                  {deleteTarget.path}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-medium">Ukuran File:</span>
+                <span className="text-slate-300 font-mono">{formatBytes(deleteTarget.size)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-medium">Target Branch:</span>
+                <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-mono text-[11px]">
+                  {branch}
+                </span>
+              </div>
+            </div>
 
-            <div className="flex justify-end space-x-2 pt-2">
+            {/* Commit Message Input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300 block">
+                Pesan Commit (Opsional)
+              </label>
+              <input
+                type="text"
+                value={deleteCommitMsg}
+                onChange={(e) => setDeleteCommitMsg(e.target.value)}
+                placeholder={`Delete ${deleteTarget.name}`}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500"
+              />
+            </div>
+
+            <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-rose-200/90 leading-relaxed">
+                Peringatan: File ini akan dihapus secara permanen dari branch <strong className="text-rose-100 font-semibold">{branch}</strong> via commit baru.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-800/80">
               <button
-                onClick={() => setDeleteTarget(null)}
+                onClick={() => {
+                  setDeleteTarget(null);
+                  setDeleteCommitMsg('');
+                }}
                 disabled={isDeleting}
-                className="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                className="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors rounded-xl"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 disabled={isDeleting}
-                className="flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-50"
+                className="flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50"
               >
-                {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>{isDeleting ? 'Menghapus...' : 'Ya, Hapus File'}</span>
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menghapus...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Ya, Hapus File</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
